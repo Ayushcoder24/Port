@@ -1,0 +1,183 @@
+/* General Styles */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f4f4f4;
+}
+
+.container {
+    display: flex;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    width: 80%;
+    max-width: 900px;
+    animation: fadeIn 1s ease-in-out;
+}
+
+#message {
+    margin: 10px 0;
+    padding: 10px;
+    border-radius: 4px;
+    display: none;
+}
+
+.left-section, .right-section {
+    flex: 1;
+    padding: 40px;
+}
+
+.left-section {
+    background-color:orangered;
+    color: #fff;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    animation: slideInLeft 1s ease-in-out;
+}
+
+.left-section h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
+.left-section p {
+    font-size: 1.2rem;
+    margin: 5px 0;
+}
+
+.right-section {
+    animation: slideInRight 1s ease-in-out;
+}
+
+.tab {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 20px;
+}
+
+.tab button {
+    background: none;
+    border: none;
+    padding: 10px 20px;
+    font-size: 1rem;
+    cursor: pointer;
+    color: orangered;
+    transition: color 0.3s ease;
+}
+
+.tab button.active {
+    color: #000;
+    border-bottom: 2px solid orangered;
+}
+
+.form-container {
+    display: none;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+.form-container.active {
+    display: block;
+}
+
+.form-container h2 {
+    margin-bottom: 20px;
+    font-size: 2rem;
+}
+
+.form-container p {
+    margin-bottom: 20px;
+    color: #666;
+}
+
+.form-container input {
+    width: 94%;
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 1rem;
+}
+
+.form-container button {
+    width: 100%;
+    padding: 10px;
+    background-color: orangered;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.form-container button:hover {
+    background-color: orangered;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideInLeft {
+    from {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column;
+        width: 90%;
+    }
+
+    .left-section, .right-section {
+        padding: 20px;
+    }
+
+    .left-section {
+        order: 1;
+    }
+
+    .right-section {
+        order: 2;
+    }
+
+    .tab {
+        flex-direction: column;
+    }
+
+    .tab button {
+        margin-bottom: 10px;
+    }
+}

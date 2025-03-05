@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Billing - Inventory Pro</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            display: flex;
+            height: 100vh;
+            background-color: #f4f4f4;
+            color: #333;
+            overflow-x: hidden;
+        }
+        .sidebar {
+            width: 250px;
+            height: 100vh;
+            background-color: #ffffff;
+            padding: 20px;
+            position: fixed;
+            left: 0;
+            transition: transform 0.3s ease-in-out;
+            box-shadow: 2px 0 10px rgba(255, 68, 0, 0.168);
+        }
+        .sidebar.hidden {
+            transform: translateX(-100%);
+        }
+        .sidebar h2 {
+            margin-bottom: 1px;
+            font-size: 24px;
+            color: orangered;
+            padding: 15px;
+            padding-top: 41px;
+        }
+        .sidebar a {
+            display: block;
+            padding: 12px 16px;
+            text-decoration: none;
+            color: #555;
+            font-size: 18px;
+            transition: all 0.3s ease;
+            border-radius: 5px;
+        }
+        .sidebar a:hover {
+            color: orangered;
+            background-color: #f0f0f0;
+            transform: translateX(10px);
+        }
+        .sidebar a.active {
+            color: orangered;
+            font-weight: bold;
+            background-color: #e9f5ff;
+        }
+        .main-content {
+            margin-left: 270px;
+            flex: 1;
+            padding: 20px;
+            transition: margin-left 0.3s ease-in-out;
+        }
+        .collapsed {
+            margin-left: 80px !important;
+            padding: 25px;
+        }
+        .hamburger {
+            font-size: 24px;
+            cursor: pointer;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            color: orangered;
+        }
+        .hamburger:hover {
+            transform: rotate(90deg);
+        }
+        h1 {
+            display: flex;
+            justify-content: center;
+            padding-top: 36px;
+            padding-bottom: 40px;
+            color: orangered;
+            font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+        }
+        .billing-form {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .billing-form label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+        .billing-form select,
+        .billing-form input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .billing-form button {
+            width: 100%;
+            padding: 12px;
+            background-color: orangered;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .billing-form button:hover {
+            background-color: #e65c00;
+        }
+        .total-cost {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            color: orangered;
+        }
+    </style>
+</head>
+<body>
+    <div class="hamburger" onclick="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+    </div>
+    <div class="sidebar" id="sidebar">
+        <h2>InvenTiger</h2>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="inventory.html">Inventory</a>
+        <a href="current.html">Current</a>
+        <a href="http://localhost:8000/api/current-items" class="active">Billing</a>
+        <a href="feedback.html">Feedback</a>
+        <a href="http://localhost:8000/register" target="_top">Logout</a>
+    </div>
+    <div class="main-content" id="main-content">
+        <h1>Billing</h1>
+        <div class="billing-form">
+            <label for="item">Select Item:</label>
+            <select id="item" onchange="updatePrice()">
+                <option value="">-- Select an item --</option>
+            </select>
+
+            <label for="quantity">Quantity:</label>
+            <input type="number" id="quantity" min="1" value="1" oninput="calculateTotal()">
+
+            <label for="price">Price per Unit:</label>
+            <input type="text" id="price" readonly>
+
+            <label for="total">Total Cost:</label>
+            <input type="text" id="total" readonly>
+
+            <button onclick="generateBill()">Generate Bill</button>
+
+            <div class="total-cost" id="totalCost"></div>
+        </div>
+    </div>
+
+    <!-- Include jsPDF library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        const API_URL = 'http://localhost:8000/api/current-items'; // Backend API URL
+
+        // Function to toggle the sidebar
+        function toggleSidebar() {
+            const sidebar = document.getElementById("sidebar");
+            const mainContent = document.getElementById("main-content");
+
+            sidebar.classList.toggle("hidden");
+
+            if (sidebar.classList.contains("hidden")) {
+                mainContent.classList.add("collapsed");
+            } else {
+                mainContent.classList.remove("collapsed");
+            }
+        }
+
+        // Fetch all items from the backend
+        async function fetchCurrentInventory() {
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                const data = await response.json();
+                console.log('Fetched data:', data); // Log the fetched data
+                populateItemDropdown(data);
+            } catch (error) {
+                console.error('Error fetching inventory:', error);
+            }
+        }
+
+        // Populate the item dropdown
+        function populateItemDropdown(items) {
+            const itemDropdown = document.getElementById('item');
+            items.forEach((item) => {
+                const option = document.createElement('option');
+                option.value = item.id; // Use item ID for backend updates
+                option.textContent = `${item.name} - ₹${item.price}`;
+                option.setAttribute('data-price', item.price);
+                option.setAttribute('data-quantity', item.quantity);
+                itemDropdown.appendChild(option);
+            });
+        }
+
+        // Update the price field when an item is selected
+        function updatePrice() {
+            const itemDropdown = document.getElementById('item');
+            const selectedOption = itemDropdown.options[itemDropdown.selectedIndex];
+            const price = selectedOption.getAttribute('data-price');
+            document.getElementById('price').value = `₹${price}`;
+            calculateTotal();
+        }
+
+        // Calculate the total cost
+        function calculateTotal() {
+            const quantity = document.getElementById('quantity').value;
+            const price = document.getElementById('price').value.replace('₹', '');
+            const total = (quantity * price).toFixed(2);
+            document.getElementById('total').value = `₹${total}`;
+            document.getElementById('totalCost').textContent = `Total Cost: ₹${total}`;
+        }
+
+        // Update item quantity in the backend
+        async function updateItemQuantity(itemId, quantitySold) {
+            try {
+                const response = await fetch(`${API_URL}/${itemId}/update-quantity`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ quantitySold }),
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                const data = await response.json();
+                console.log('Quantity updated:', data);
+            } catch (error) {
+                console.error('Error updating quantity:', error);
+            }
+        }
+
+        // Generate the bill and update quantity
+        async function generateBill() {
+            const itemDropdown = document.getElementById('item');
+            const selectedOption = itemDropdown.options[itemDropdown.selectedIndex];
+            const itemId = selectedOption.value;
+            const selectedItem = selectedOption.textContent;
+            const quantity = document.getElementById('quantity').value;
+            const total = document.getElementById('total').value;
+
+            if (!selectedItem || !quantity || !total) {
+                alert('Please select an item and enter a valid quantity.');
+                return;
+            }
+
+            // Update item quantity in the backend
+            await updateItemQuantity(itemId, quantity);
+
+            // Generate PDF
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Add content to the PDF
+            doc.setFontSize(18);
+            doc.text("Invoice - Inventory Pro", 10, 20);
+            doc.setFontSize(14);
+            doc.text(`Item: ${selectedItem}`, 10, 40);
+            doc.text(`Quantity: ${quantity}`, 10, 50);
+            doc.text(`Total: ${total}`, 10, 60);
+
+            // Save the PDF
+            doc.save(`Invoice_${Date.now()}.pdf`);
+
+            alert(`Bill Generated:\nItem: ${selectedItem}\nQuantity: ${quantity}\nTotal: ${total}`);
+        }
+
+        // Fetch inventory when the page loads
+        fetchCurrentInventory();
+    </script>
+</body>
+</html>

@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Current List - Inventory Pro</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            display: flex;
+            height: 100vh;
+            background-color: #f4f4f4;
+            color: #333;
+            overflow-x: hidden;
+        }
+        .sidebar {
+            width: 250px;
+            height: 100vh;
+            background-color: #ffffff;
+            padding: 20px;
+            position: fixed;
+            left: 0;
+            transition: transform 0.3s ease-in-out;
+            box-shadow: 2px 0 10px rgba(255, 68, 0, 0.168);
+        }
+        .sidebar.hidden {
+            transform: translateX(-100%);
+        }
+        .sidebar h2 {
+            margin-bottom: 1px;
+            font-size: 24px;
+            color: orangered;
+            padding: 15px;
+            padding-top: 41px;
+        }
+        .sidebar a {
+            display: block;
+            padding: 12px 16px;
+            text-decoration: none;
+            color: #555;
+            font-size: 18px;
+            transition: all 0.3s ease;
+            border-radius: 5px;
+        }
+        .sidebar a:hover {
+            color: orangered;
+            background-color: #f0f0f0;
+            transform: translateX(10px);
+        }
+        .sidebar a.active {
+            color: orangered;
+            font-weight: bold;
+            background-color: #e9f5ff;
+        }
+        .main-content {
+            margin-left: 270px;
+            flex: 1;
+            padding: 20px;
+            transition: margin-left 0.3s ease-in-out;
+        }
+        .collapsed {
+            margin-left: 80px !important;
+            padding: 25px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f9f9f9;
+        }
+        .hamburger {
+            font-size: 24px;
+            cursor: pointer;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            color: orangered;
+        }
+        .hamburger:hover {
+            transform: rotate(90deg);
+        }
+        h1 {
+            padding-top: 36px;
+            padding-bottom: 40px;
+            color: orangered;
+            font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div class="hamburger" onclick="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+    </div>
+    <div class="sidebar" id="sidebar">
+        <h2>Inventory Pro</h2>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="inventory.html">Inventory</a>
+        <a href="http://localhost:8000/api/items" class="active">Current</a>
+        <a href="billing.html">Billing</a>
+        <a href="feedback.html">Feedback</a>
+        <a href="http://localhost:8000/register">Logout</a>
+    </div>
+    <div class="main-content" id="main-content">
+        <h1>Current Inventory List</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Price</th>
+                    <th>Quantity</th>
+                    <th>Min. Quantity</th>
+                    <th>Last Updated</th>
+                </tr>
+            </thead>
+            <tbody id="currentInventoryTable">
+                <!-- Current inventory items will be dynamically added here -->
+            </tbody>
+        </table>
+    </div>
+    <script>
+        window.addEventListener("load", () => {
+            if (localStorage.getItem("inventoryUpdated") === "true") {
+                fetchCurrentInventory();
+                localStorage.removeItem("inventoryUpdated"); // Clear the flag after refreshing
+            }
+        });
+
+        const API_URL = 'http://localhost:8000/api/current-items'; // Backend API URL
+
+        // Function to toggle the sidebar
+        function toggleSidebar() {
+            const sidebar = document.getElementById("sidebar");
+            const mainContent = document.getElementById("main-content");
+
+            sidebar.classList.toggle("hidden");
+
+            if (sidebar.classList.contains("hidden")) {
+                mainContent.classList.add("collapsed");
+            } else {
+                mainContent.classList.remove("collapsed");
+            }
+        }
+
+        async function updateItemQuantity(itemId, quantitySold) {
+            try {
+                const response = await fetch(`${API_URL}/${itemId}/update-quantity`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ quantity: -quantitySold }), 
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                const updatedItem = await response.json();
+                console.log('Quantity updated:', updatedItem);
+
+                // Send email if quantity is below minQuantity
+                if (updatedItem.quantity <= updatedItem.minQuantity) {
+                    await sendEmailNotification(updatedItem);
+                }
+
+                // Refresh inventory
+                fetchCurrentInventory();
+            } catch (error) {
+                console.error('Error updating quantity:', error);
+            }
+        }
+
+        async function sendEmailNotification(item) {
+            try {
+                const response = await fetch('http://localhost:8000/api/send-email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        subject: `Stock Alert: ${item.name} is Running Low`,
+                        message: `Warning! The item "${item.name}" is below the minimum quantity. 
+                        Current Quantity: ${item.quantity}, Minimum Required: ${item.minQuantity}. 
+                        Please restock immediately.`,
+                        recipient: "chauhananiket316@gmail.com" // Replace with the correct admin email
+                    }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Email send failed! Status: ${response.status}`);
+                }
+
+                console.log('Low stock email notification sent successfully.');
+            } catch (error) {
+                console.error('Error sending email:', error);
+            }
+        }
+
+        // Fetch all items from the backend
+        async function fetchCurrentInventory() {
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                const data = await response.json();
+                console.log('Fetched data:', data); // Log the fetched data
+                renderCurrentInventory(data);
+            } catch (error) {
+                console.error('Error fetching inventory:', error);
+            }
+        }
+
+        // Render the current inventory table
+        function renderCurrentInventory(items) {
+            const currentInventoryTable = document.getElementById('currentInventoryTable');
+            currentInventoryTable.innerHTML = ''; // Clear previous table data
+
+            items.forEach((item) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.name}</td>
+                    <td>${item.description}</td>
+                    <td>₹${item.price}</td>
+                    <td ${item.quantity < item.minQuantity ? 'style="color: red; font-weight: bold;"' : ''}>
+                        ${item.quantity} ${item.quantity < item.minQuantity ? '⚠' : ''}
+                    </td>
+                    <td>${item.minQuantity}</td>
+                    <td>${new Date(item.lastUpdated).toLocaleString()}</td>
+                `;
+                currentInventoryTable.appendChild(row);
+            });
+        }
+
+        // Fetch inventory when the page loads
+        fetchCurrentInventory();
+    </script>
+</body>
+</html>

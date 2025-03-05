@@ -1,0 +1,202 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animated Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            display: flex;
+            height: 100vh;
+            background-color: #f4f4f4;
+            color: #333;
+            overflow-x: hidden;
+            
+        }
+        .sidebar {
+            width: 250px;
+            height: 100vh;
+            background-color: #ffffff;
+            padding: 20px;
+            position: fixed;
+            left: -250px;
+            transition: left 0.5s ease-in-out;
+            box-shadow: 2px 0 10px rgba(255, 68, 0, 0.168);
+        }
+        .sidebar.active {
+            left: 0;
+        }
+        .sidebar h2 {
+            margin-bottom: 1px;
+            font-size: 24px;
+            color: orangered;
+            padding: 15px;
+            padding-top: 41px;
+        }
+        .sidebar p {
+            margin: 20px 16px;
+            cursor: pointer;
+            transition: color 0.3s ease, transform 0.3s ease;
+            color: #555;
+        }
+        .sidebar p:hover {
+            color: orangered;
+            transform: translateX(10px);
+        }
+        .sidebar p.active {
+            color: orangered;
+            font-weight: bold;
+            background-color: #e9f5ff; /* Light blue background for active state */
+            padding: 10px;
+            border-radius: 5px;
+        }
+        h1 {
+            padding-top: 36px;
+            padding-bottom: 50px;
+            color: orangered;
+            font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+        }
+        .hamburger {
+            font-size: 24px;
+            cursor: pointer;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            color:orangered;
+        }
+        .hamburger:hover {
+            transform: rotate(90deg);
+        }
+        .main-content {
+            margin-left: 50px;
+            flex: 1;
+            padding: 20px;
+            transition: margin-left 0.5s ease-in-out;
+        }
+        .dashboard-cards {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .card {
+            background-color: #ffffff;
+            padding: 55px;
+            border-radius: 10px;
+            width: 275px;
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+            animation: slideIn 0.5s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            color: #555;
+            font-size: large;
+            font-weight: 600;
+        }
+        .card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(255, 68, 0, 0.342);
+            background-color: rgba(255, 68, 0, 0.095);
+            color: orangered;
+        }
+
+        .sidebar a {
+            display: block;
+            padding: 12px 16px;
+            text-decoration: none;
+            color: #555;
+            font-size: 18px;
+            transition: color 0.3s ease, background-color 0.3s ease, transform 0.3s ease;
+            border-radius: 5px;
+        }
+        
+        .sidebar a:hover {
+            color: orangered;
+            background-color: #f0f0f0;
+            transform: translateX(10px);
+        }
+        
+        .sidebar a.active {
+            color: orangered;
+            font-weight: bold;
+            background-color: #e9f5ff; /* Light blue background for active state */
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .card:nth-child(1) { animation-delay: 0.1s; }
+        .card:nth-child(2) { animation-delay: 0.2s; }
+        .card:nth-child(3) { animation-delay: 0.3s; }
+        .card:nth-child(4) { animation-delay: 0.4s; }
+    </style>
+</head>
+<body>
+    <div class="hamburger" onclick="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+    </div>
+    <div class="sidebar" id="sidebar">
+        <h2>InvenTiger</h2>
+        <a href="dashboard.html" class="active">Dashboard</a>
+        <a href="inventory.html">Inventory</a>
+        <a href="current.html">Current</a>
+        <a href="billing.html">Billing</a>
+        <a href="feedback.html">Feedback</a>
+        <a href="http://localhost:8000/register">logout</a>
+    </div>
+    <div class="main-content" id="main-content">
+        <h1>Dashboard</h1>
+        <div class="dashboard-cards">
+            <div class="card">Total Items: 0</div>
+            <div class="card">Low Stock Items: 0</div>
+            <div class="card">Total Value: $0.00</div>
+            <div class="card">Active Items: 0</div>
+        </div>
+    </div>
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById("sidebar");
+            const mainContent = document.getElementById("main-content");
+            if (sidebar.classList.contains("active")) {
+                sidebar.classList.remove("active");
+                mainContent.style.marginLeft = "50px";
+            } else {
+                sidebar.classList.add("active");
+                mainContent.style.marginLeft = "270px";
+            }
+        }
+
+        async function fetchInventoryStats() {
+            try {
+                let response = await fetch("http://localhost:8000/api/inventory-stats");
+                let data = await response.json();
+
+                document.querySelector(".dashboard-cards .card:nth-child(1)").textContent = `Total Items: ${data.totalItems}`;
+                document.querySelector(".dashboard-cards .card:nth-child(2)").textContent = `Low Stock Items: ${data.lowStockItems}`;
+                document.querySelector(".dashboard-cards .card:nth-child(3)").textContent = `Total Value: $${data.totalValue.toFixed(2)}`;
+                document.querySelector(".dashboard-cards .card:nth-child(4)").textContent = `Active Items: ${data.activeItems}`;
+            } catch (error) {
+                console.error("Error fetching inventory stats:", error);
+            }
+        }
+
+        // Fetch inventory stats when the page loads
+        document.addEventListener("DOMContentLoaded", fetchInventoryStats);
+    </script>
+</body>
+</html>

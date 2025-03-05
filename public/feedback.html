@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feedback</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            display: flex;
+            height: 100vh;
+            background-color: #f4f4f4;
+            color: #333;
+            overflow-x: hidden;
+        }
+        .sidebar {
+            width: 250px;
+            height: 100vh;
+            background-color: #ffffff;
+            padding: 20px;
+            position: fixed;
+            left: 0;
+            transition: transform 0.3s ease-in-out;
+            box-shadow: 2px 0 10px rgba(255, 68, 0, 0.168);
+        }
+        .sidebar.hidden {
+            transform: translateX(-100%);
+        }
+        .sidebar h2 {
+            margin-bottom: 1px;
+            font-size: 24px;
+            color: orangered;
+            padding: 15px;
+            padding-top: 41px;
+        }
+        .sidebar a {
+            display: block;
+            padding: 12px 16px;
+            text-decoration: none;
+            color: #555;
+            font-size: 18px;
+            transition: all 0.3s ease;
+            border-radius: 5px;
+        }
+        .sidebar a:hover {
+            color: orangered;
+            background-color: #f0f0f0;
+            transform: translateX(10px);
+        }
+        .sidebar a.active {
+            color: orangered;
+            font-weight: bold;
+            background-color: #e9f5ff;
+        }
+        .main-content {
+            margin-left: 270px;
+            flex: 1;
+            padding: 20px;
+            transition: margin-left 0.3s ease-in-out;
+        }
+        .collapsed {
+            margin-left: 80px !important;
+            padding: 25px;
+        }
+        h1 {
+            display: flex;
+            justify-content: center;
+            font-size: 33px;
+            padding-top: 37px;
+            padding-bottom: 50px;
+            color: orangered;
+            font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+        }
+        .feedback-form {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .feedback-form input,
+        .feedback-form textarea,
+        .feedback-form button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        .feedback-form input:focus,
+        .feedback-form textarea:focus {
+            border-color: orangered;
+            box-shadow: 0 0 5px rgba(255, 68, 0, 0.5);
+        }
+        .feedback-form button {
+            background-color: orangered;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .feedback-form button:hover {
+            background-color: #e65c00;
+        }
+        .hamburger {
+            font-size: 24px;
+            cursor: pointer;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            color: orangered;
+        }
+        .hamburger:hover {
+            transform: rotate(90deg);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="hamburger" onclick="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+    </div>
+    <div class="sidebar" id="sidebar">
+        <h2>Inventory Pro</h2>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="inventory.html">Inventory</a>
+        <a href="current.html">Current</a>
+        <a href="billing.html">Billing</a>
+        <a href="feedback.html" class="active">Feedback</a>
+        <a href="http://localhost:8000/register" >logout</a>
+    </div>
+    <div class="main-content" id="main-content">
+        <h1>Feedback</h1>
+        <div class="feedback-form">
+            <form id="feedbackForm" action="https://formsubmit.co/ayushsj2004@gmail.com" method="POST">
+                <input type="text" name="name" id="name" placeholder="Your Name" required>
+                <input type="email" id="email" name="email" placeholder="Your Email" required>
+                <textarea id="message" rows="5" placeholder="Your Feedback" name="message" required></textarea>
+                <input type="hidden" name="_captcha" value="false">
+                <input type="hidden" name="_template" value="table">
+                <button type="submit">Submit Feedback</button>
+            </form>
+        </div>
+    </div>
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById("sidebar");
+            const mainContent = document.getElementById("main-content");
+
+            sidebar.classList.toggle("hidden");
+
+            if (sidebar.classList.contains("hidden")) {
+                mainContent.classList.add("collapsed");
+            } else {
+                mainContent.classList.remove("collapsed");
+            }
+        }
+
+     
+    </script>
+</body>
+</html>
